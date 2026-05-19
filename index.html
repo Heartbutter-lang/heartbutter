@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Heartbutter</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #F5F0E8 0%, #EDE5D5 60%, #E8DDD0 100%);
+      font-family: Georgia, serif;
+      color: #3D0A10;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .blob1 {
+      position: fixed; top: -10%; right: -5%;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(107,16,32,0.1) 0%, transparent 65%);
+      border-radius: 50%; pointer-events: none;
+    }
+    .blob2 {
+      position: fixed; bottom: -15%; left: -8%;
+      width: 420px; height: 420px;
+      background: radial-gradient(circle, rgba(196,146,154,0.13) 0%, transparent 65%);
+      border-radius: 50%; pointer-events: none;
+    }
+
+    .wrap { max-width: 740px; margin: 0 auto; padding: 56px 24px 96px; }
+
+    /* HEADER */
+    .header { text-align: center; margin-bottom: 52px; }
+    .eyebrow { font-size: 10px; letter-spacing: 7px; text-transform: uppercase; color: #9A6068; margin-bottom: 18px; }
+    h1 { font-size: clamp(52px, 10vw, 88px); font-weight: 400; line-height: 1; color: #3D0A10; letter-spacing: -1px; font-style: normal; }
+    .divider { width: 48px; height: 1px; background: linear-gradient(90deg, transparent, #8B1A2A, transparent); margin: 18px auto; }
+    .tagline { color: #6B1020; font-size: 15px; font-style: italic; }
+
+    /* CARD */
+    .card {
+      background: rgba(255,255,255,0.65);
+      border: 1px solid rgba(139,26,42,0.15);
+      border-radius: 16px; padding: 24px;
+    }
+    .input-card {
+      background: rgba(255,255,255,0.65);
+      border: 1px solid rgba(139,26,42,0.2);
+      border-radius: 20px; padding: 32px;
+      margin-bottom: 28px;
+    }
+
+    /* LABELS */
+    .label {
+      display: block; font-size: 10px; letter-spacing: 4px;
+      text-transform: uppercase; color: #9A6068; margin-bottom: 14px;
+    }
+
+    /* INPUT ROW */
+    .input-row { display: flex; gap: 10px; position: relative; }
+    #ingredient-input {
+      flex: 1; background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(139,26,42,0.25); border-radius: 10px;
+      padding: 14px 18px; color: #3D0A10; font-size: 15px;
+      font-family: Georgia, serif; outline: none;
+    }
+    #ingredient-input:focus { border-color: rgba(139,26,42,0.5); }
+    .add-btn {
+      background: rgba(139,26,42,0.15); border: 1px solid rgba(139,26,42,0.3);
+      border-radius: 10px; padding: 14px 22px; color: #8B1A2A;
+      cursor: pointer; font-size: 22px; line-height: 1;
+    }
+    .add-btn:hover { background: rgba(139,26,42,0.25); }
+
+    /* AUTOCOMPLETE */
+    #autocomplete {
+      display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 58px;
+      background: #F0E8E0; border: 1px solid rgba(139,26,42,0.25);
+      border-radius: 10px; overflow: hidden; z-index: 20;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+    .hint {
+      padding: 11px 18px; cursor: pointer; font-size: 14px;
+      color: #3D0A10; border-bottom: 1px solid rgba(139,26,42,0.08);
+      font-family: Georgia, serif;
+    }
+    .hint:hover { background: rgba(139,26,42,0.08); }
+
+    /* QUICK ADD */
+    .quick-add-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .quick-chip {
+      background: transparent; border: 1px solid rgba(139,26,42,0.18);
+      border-radius: 20px; padding: 6px 14px; color: #9A6068;
+      cursor: pointer; font-size: 12px; font-family: Georgia, serif;
+      transition: all .15s;
+    }
+    .quick-chip:hover { border-color: rgba(196,146,154,0.5); color: #C4929A; }
+
+    /* PILLS */
+    #items-wrap { margin-top: 22px; display: none; }
+    #items-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .pill {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(139,26,42,0.08); border: 1px solid rgba(139,26,42,0.22);
+      border-radius: 20px; padding: 7px 14px; font-size: 13px; color: #8B1A2A;
+    }
+    .pill-x { cursor: pointer; opacity: .45; font-size: 15px; line-height: 1; }
+    .pill-x:hover { opacity: 1; }
+
+    /* MOOD */
+    .mood-row { display: flex; gap: 10px; margin-top: 10px; }
+    .mood-btn {
+      flex: 1; padding: 16px 14px; border-radius: 12px; cursor: pointer;
+      font-size: 13px; font-family: Georgia, serif; transition: all .2s;
+      background: rgba(139,26,42,0.05); border: 1px solid rgba(139,26,42,0.18);
+      color: #6B1020;
+    }
+    .mood-btn.active {
+      background: linear-gradient(135deg, #6B1020, #8B1A2A);
+      border-color: #8B1A2A; color: #F5F0E8;
+      box-shadow: 0 4px 16px rgba(139,26,42,0.25);
+    }
+    .mood-icon { font-size: 20px; margin-bottom: 5px; }
+
+    /* CTA */
+    #shake-btn {
+      width: 100%; margin-top: 28px; padding: 18px; border: none;
+      border-radius: 12px; font-size: 13px; letter-spacing: 5px;
+      text-transform: uppercase; font-family: Georgia, serif;
+      cursor: not-allowed; transition: all .25s;
+      background: rgba(139,26,42,0.06); color: #9A6068;
+    }
+    #shake-btn.ready {
+      background: linear-gradient(135deg, #6B1020, #8B1A2A);
+      color: #F5F0E8; cursor: pointer;
+      box-shadow: 0 4px 24px rgba(139,26,42,0.35);
+    }
+
+    /* LOADING */
+    #loading { display: none; text-align: center; padding: 52px; color: #6B1020; font-style: italic; }
+    .spinner { font-size: 38px; display: inline-block; animation: spin 1.4s linear infinite; margin-bottom: 16px; }
+    @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+    /* ERROR */
+    #error-box {
+      display: none; padding: 20px 24px; color: #8B1A2A;
+      background: rgba(139,26,42,0.06); border-radius: 12px;
+      border: 1px solid rgba(139,26,42,0.2); font-size: 13px; line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    /* RECIPE */
+    #recipe { display: none; animation: fadeUp .5s ease forwards; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+
+    .recipe-hero {
+      border-radius: 20px; padding: 36px; margin-bottom: 16px;
+      position: relative; overflow: hidden;
+    }
+    .hero-bg-emoji {
+      position: absolute; top: -20px; right: -10px;
+      font-size: 110px; opacity: .06; line-height: 1; filter: grayscale(1);
+    }
+    .hero-inner { display: flex; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
+    .hero-emoji { font-size: 48px; }
+    .vibe-tag {
+      display: inline-block; border-radius: 20px; padding: 3px 13px;
+      font-size: 10px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .recipe-name { font-size: 26px; font-weight: 400; margin-bottom: 6px; }
+    .recipe-tagline { font-style: italic; font-size: 14px; color: #6B1020; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    @media (max-width: 540px) { .two-col { grid-template-columns: 1fr; } }
+
+    .section-label {
+      font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+      color: #9A6068; margin-bottom: 18px;
+    }
+    .ing-row {
+      display: flex; justify-content: space-between; padding: 8px 0;
+      border-bottom: 1px solid rgba(139,26,42,0.1); gap: 10px; align-items: baseline;
+    }
+    .ing-name { color: #E8D5D8; font-size: 13px; }
+    .ing-amount { color: #9A6068; font-size: 11px; white-space: nowrap; }
+    .step-row { display: flex; gap: 12px; margin-bottom: 13px; }
+    .step-num {
+      min-width: 20px; height: 20px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; flex-shrink: 0;
+    }
+    .step-text { color: #6B1020; font-size: 13px; line-height: 1.55; }
+
+    .elevate-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px,1fr)); gap: 10px; }
+    .elevate-tip {
+      background: rgba(196,146,154,0.07); border: 1px solid rgba(196,146,154,0.15);
+      border-radius: 10px; padding: 13px 15px; font-size: 12px;
+      color: #C4929A; line-height: 1.55;
+    }
+
+    .zp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr)); gap: 12px; }
+    .zp-card {
+      background: rgba(139,26,42,0.04); border: 1px solid rgba(139,26,42,0.12);
+      border-radius: 12px; padding: 16px;
+    }
+    .zp-name { font-size: 14px; color: #3D0A10; margin-bottom: 4px; }
+    .zp-brand { font-size: 10px; color: #C4929A; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 9px; }
+    .zp-why { font-size: 12px; color: #9A6068; line-height: 1.55; }
+
+    /* DEBUT NOTE */
+    .debut-note {
+      margin-top: 40px; padding: 32px;
+      background: rgba(139,26,42,0.05); border: 1px solid rgba(139,26,42,0.15);
+      border-radius: 16px;
+    }
+    .debut-top {
+      text-align: center; margin-bottom: 28px; padding-bottom: 28px;
+      border-bottom: 1px solid rgba(139,26,42,0.12);
+    }
+    .debut-eyebrow { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: #C4929A; margin-bottom: 12px; }
+    .debut-heading { font-size: 17px; color: #8B1A2A; margin-bottom: 8px; }
+    .debut-sub { font-size: 12px; color: #9A6068; font-style: italic; line-height: 1.7; }
+
+    .invite-section { text-align: center; }
+    .invite-body { font-size: 14px; color: #6B1020; line-height: 1.7; margin-bottom: 20px; }
+    .ticket-btn {
+      display: inline-block; margin-bottom: 20px; padding: 14px 32px;
+      background: linear-gradient(135deg, #6B1020, #8B1A2A);
+      border-radius: 10px; color: #F5F0E8; font-size: 12px;
+      letter-spacing: 4px; text-transform: uppercase; text-decoration: none;
+      font-family: Georgia, serif; box-shadow: 0 4px 16px rgba(139,26,42,0.25);
+    }
+    .ticket-btn:hover { opacity: .9; }
+    .code-box {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      background: rgba(139,26,42,0.06); border: 1px dashed rgba(139,26,42,0.25);
+      border-radius: 10px; padding: 12px 20px; margin-bottom: 20px;
+      justify-content: center;
+    }
+    .code-label { font-size: 11px; color: #9A6068; letter-spacing: 1px; }
+    .code-value { font-size: 15px; color: #8B1A2A; letter-spacing: 4px; font-weight: bold; }
+    .email-note { font-size: 11px; color: #9A6068; font-style: italic; }
+    .email-note a { color: #C4929A; text-decoration: none; }
+    .email-note a:hover { text-decoration: underline; }
+
+    /* RESET */
+    .reset-wrap { text-align: center; margin-top: 36px; }
+    #reset-btn {
+      background: transparent; border: 1px solid rgba(139,26,42,0.25);
+      border-radius: 20px; padding: 10px 28px; color: #9A6068;
+      cursor: pointer; font-size: 11px; letter-spacing: 3px;
+      text-transform: uppercase; font-family: Georgia, serif;
+    }
+    #reset-btn:hover { border-color: rgba(196,146,154,0.4); color: #C4929A; }
+  </style>
+</head>
+<body>
+
+<div class="blob1"></div>
+<div class="blob2"></div>
+
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="eyebrow">Zero Proof &nbsp;·&nbsp; Full Feeling</div>
+    <h1>Heartbutter</h1>
+    <div class="divider"></div>
+    <p class="tagline">Tell us what's in your fridge. We'll make it a moment.</p>
+  </div>
+
+  <!-- INPUT CARD -->
+  <div class="input-card">
+
+    <label class="label">What's in your fridge?</label>
+
+    <div class="input-row">
+      <input id="ingredient-input" type="text" placeholder="e.g. Cranberry juice, ginger ale…" autocomplete="off" />
+      <button class="add-btn" onclick="addFromInput()">+</button>
+      <div id="autocomplete"></div>
+    </div>
+
+    <div style="margin-top:18px;">
+      <div class="label" style="margin-bottom:10px;">Quick add</div>
+      <div class="quick-add-row" id="quick-add-row"></div>
+    </div>
+
+    <div id="items-wrap">
+      <div class="label" style="margin-bottom:0;">Your bar cart</div>
+      <div id="items-list"></div>
+    </div>
+
+    <div style="margin-top:24px;">
+      <div class="label" style="margin-bottom:12px;">Are you in the mood for something...</div>
+      <div class="mood-row">
+        <button class="mood-btn" id="mood-cold" onclick="setMood('cold')">
+          <div class="mood-icon">🧊</div>
+          Cold &amp; Iced
+        </button>
+        <button class="mood-btn" id="mood-hot" onclick="setMood('hot')">
+          <div class="mood-icon">🕯️</div>
+          Warm &amp; Cozy
+        </button>
+      </div>
+    </div>
+
+    <button id="shake-btn" onclick="shake()">Shake It Up ✦</button>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading">
+    <div class="spinner">🍷</div>
+    <div style="letter-spacing:2px;font-size:13px;text-transform:uppercase;">Crafting your pour…</div>
+  </div>
+
+  <!-- ERROR -->
+  <div id="error-box"></div>
+
+  <!-- RECIPE -->
+  <div id="recipe"></div>
+
+</div>
+
+<script>
+  // ─────────────────────────────────────────────
+  // !! PASTE YOUR ANTHROPIC API KEY BELOW !!
+  // Get one free at: https://console.anthropic.com
+  // ─────────────────────────────────────────────
+
+  const QUICK_ADD = ["Sparkling Water","Coca-Cola","Ginger Ale","Lemon","Mint","Cranberry Juice","Kombucha","Coconut Water"];
+  const ALL_SUGGESTIONS = ["Coca-Cola","Sprite","Sparkling Water","Ginger Ale","Tonic Water","Gatorade","Lemonade","Orange Juice","Cranberry Juice","Pineapple Juice","Apple Juice","Grape Juice","Coconut Water","Iced Tea","Limeade","Grenadine","Simple Syrup","Honey","Mint","Lemon","Lime","Orange","Cucumber","Ginger","Basil","Rosemary","Frozen Fruit","Soda Water","Root Beer","Dr Pepper","Kombucha","Yerba Mate","Pomegranate Juice","Peach Nectar","Mango Juice"];
+
+  const VIBE_ACCENT = { Tropical:"#C4922A", Cozy:"#8B1A2A", Zesty:"#A8922A", Refreshing:"#2A6B5A", Floral:"#7A3A6B", Bold:"#8B1A2A", Romantic:"#C4929A" };
+
+  let items = [];
+  let mood = null;
+
+  // ── render quick add chips ───────────────────
+  function renderQuickAdd() {
+    const row = document.getElementById('quick-add-row');
+    row.innerHTML = '';
+    QUICK_ADD.filter(i => !items.includes(i)).forEach(i => {
+      const b = document.createElement('button');
+      b.className = 'quick-chip';
+      b.textContent = '+ ' + i;
+      b.onclick = () => addItem(i);
+      row.appendChild(b);
+    });
+  }
+  renderQuickAdd();
+
+  // ── add / remove items ───────────────────────
+  function addItem(val) {
+    const t = val.trim();
+    if (!t || items.includes(t)) return;
+    items.push(t);
+    renderPills();
+    renderQuickAdd();
+    updateBtn();
+    document.getElementById('autocomplete').style.display = 'none';
+    document.getElementById('ingredient-input').value = '';
+  }
+
+  function addFromInput() {
+    addItem(document.getElementById('ingredient-input').value);
+  }
+
+  function removeItem(val) {
+    items = items.filter(i => i !== val);
+    renderPills();
+    renderQuickAdd();
+    updateBtn();
+  }
+
+  function renderPills() {
+    const wrap = document.getElementById('items-wrap');
+    const list = document.getElementById('items-list');
+    wrap.style.display = items.length ? 'block' : 'none';
+    list.innerHTML = '';
+    items.forEach(item => {
+      const d = document.createElement('div');
+      d.className = 'pill';
+      d.innerHTML = item + '<span class="pill-x" onclick="removeItem(\'' + item.replace(/'/g,"\\'") + '\')">×</span>';
+      list.appendChild(d);
+    });
+  }
+
+  // ── mood ─────────────────────────────────────
+  function setMood(val) {
+    mood = val;
+    document.getElementById('mood-cold').classList.toggle('active', val === 'cold');
+    document.getElementById('mood-hot').classList.toggle('active', val === 'hot');
+    updateBtn();
+  }
+
+  // ── button state ─────────────────────────────
+  function updateBtn() {
+    const btn = document.getElementById('shake-btn');
+    const ready = items.length > 0 && mood !== null;
+    btn.classList.toggle('ready', ready);
+  }
+
+  // ── autocomplete ─────────────────────────────
+  document.getElementById('ingredient-input').addEventListener('input', function() {
+    const v = this.value;
+    const box = document.getElementById('autocomplete');
+    if (v.length < 2) { box.style.display = 'none'; return; }
+    const matches = ALL_SUGGESTIONS.filter(s => s.toLowerCase().includes(v.toLowerCase()) && !items.includes(s)).slice(0,5);
+    if (!matches.length) { box.style.display = 'none'; return; }
+    box.innerHTML = '';
+    matches.forEach(m => {
+      const d = document.createElement('div');
+      d.className = 'hint';
+      d.textContent = m;
+      d.onclick = () => addItem(m);
+      box.appendChild(d);
+    });
+    box.style.display = 'block';
+  });
+
+  document.getElementById('ingredient-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') addFromInput();
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.input-row')) document.getElementById('autocomplete').style.display = 'none';
+  });
+
+  // ── shake ────────────────────────────────────
+  async function shake() {
+    if (!items.length || !mood) return;
+
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('recipe').style.display = 'none';
+    document.getElementById('error-box').style.display = 'none';
+
+    const nameWords = ["Heart","Melt","Soft","Velvet","Vine","Gilded Hour","Paper Crown","Common Ground","Perfect Places","Good Company","Sunday Best","Warm Delight"];
+    const tempNote = mood === 'hot'
+      ? "The drink MUST be served warm or hot (e.g. mulled, steamed, simmered, or warmed). Think warm ciders, spiced teas, hot lemonades, mulled juices."
+      : "The drink MUST be served cold or iced.";
+
+    const prompt = `Given these fridge ingredients: ${items.join(", ")}
+
+${tempNote}
+
+The drink name should feel poetic and evocative. Draw inspiration from these words/phrases when naming it (you don't have to use them verbatim, but let them influence the name's feeling): ${nameWords.join(", ")}.
+
+You MUST always include exactly 2 zero proof spirits in the zeroproof array — real brands that exist (e.g. Lyre's, Seedlip, Monday, Ritual Zero Proof, Ghia, Curious Elixirs). Never leave it empty.
+
+Return ONLY a raw JSON object — no markdown, no backticks, no explanation before or after. Example shape:
+{"name":"drink name","emoji":"🍹","tagline":"short tagline under 10 words","vibe":"Refreshing","ingredients":[{"item":"ingredient","amount":"2 oz"}],"steps":["step one","step two","step three"],"elevate":{"title":"Level Up Next Time","tips":["tip1","tip2","tip3"]},"zeroproof":[{"name":"Whiskey Alternative","brand":"Ritual Zero Proof","why":"adds warmth and depth without alcohol"},{"name":"Spiced Rum Alternative","brand":"Lyre's","why":"brings a rich, spiced note that elevates the drink"}]}
+
+vibe must be one of: Tropical, Cozy, Zesty, Refreshing, Floral, Bold, Romantic`;
+
+    let lastErr;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 1500 * attempt));
+      try {
+        const res = await fetch("/.netlify/functions/claude", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-5",
+            max_tokens: 1024,
+            messages: [{ role: "user", content: prompt }],
+          }),
+        });
+        const json = await res.json();
+        if (json?.error?.type === "overloaded_error") { lastErr = new Error("Overloaded — retrying…"); continue; }
+        if (!res.ok) throw new Error(json?.error?.message || ("API " + res.status));
+        const raw = (json.content ?? []).map(b => b.text ?? "").join("").trim();
+        const match = raw.match(/\{[\s\S]*\}/);
+        if (!match) throw new Error("Unexpected response");
+        const recipe = JSON.parse(match[0]);
+        document.getElementById('loading').style.display = 'none';
+        renderRecipe(recipe);
+        return;
+      } catch(e) { lastErr = e; }
+    }
+
+    document.getElementById('loading').style.display = 'none';
+    const eb = document.getElementById('error-box');
+    eb.innerHTML = '<strong style="display:block;margin-bottom:6px;">Something went wrong</strong>' + (lastErr?.message || 'Please try again.');
+    eb.style.display = 'block';
+  }
+
+  // ── render recipe ────────────────────────────
+  function renderRecipe(r) {
+    const ac = VIBE_ACCENT[r.vibe] || "#8B1A2A";
+    const box = document.getElementById('recipe');
+
+    const ings = (r.ingredients||[]).map(i =>
+      `<div class="ing-row"><span class="ing-name" style="color:#C4929A">${i.item}</span><span class="ing-amount">${i.amount}</span></div>`
+    ).join('');
+
+    const steps = (r.steps||[]).map((s,i) =>
+      `<div class="step-row">
+        <div class="step-num" style="background:${ac}22;border:1px solid ${ac}44;color:${ac}">${i+1}</div>
+        <p class="step-text">${s}</p>
+      </div>`
+    ).join('');
+
+    const tips = (r.elevate?.tips||[]).map(t =>
+      `<div class="elevate-tip">${t}</div>`
+    ).join('');
+
+    const zp = (r.zeroproof||[]).map(s =>
+      `<div class="zp-card">
+        <div class="zp-name">${s.name}</div>
+        <div class="zp-brand">${s.brand}</div>
+        <p class="zp-why">${s.why}</p>
+      </div>`
+    ).join('');
+
+    box.innerHTML = `
+      <div class="recipe-hero" style="background:linear-gradient(135deg,${ac}18 0%,transparent 70%);border:1px solid ${ac}35">
+        <div class="hero-bg-emoji">${r.emoji}</div>
+        <div class="hero-inner">
+          <div class="hero-emoji">${r.emoji}</div>
+          <div style="flex:1">
+            <div class="vibe-tag" style="background:${ac}22;border:1px solid ${ac}44;color:${ac}">${r.vibe}</div>
+            <h2 class="recipe-name" style="color:#3D0A10">${r.name}</h2>
+            <p class="recipe-tagline">${r.tagline}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="section-label">Ingredients</div>
+          ${ings}
+        </div>
+        <div class="card">
+          <div class="section-label">Method</div>
+          ${steps}
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div class="section-label">✦ ${r.elevate?.title || 'Level Up Next Time'}</div>
+        <div class="elevate-grid">${tips}</div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Zero Proof Spirits</div>
+        <p style="color:#9A6068;font-size:12px;margin-bottom:18px;font-style:italic">Non-alcoholic spirits to elevate this next time</p>
+        <div class="zp-grid">${zp}</div>
+      </div>
+
+      <div class="debut-note">
+        <div class="debut-top">
+          <div class="debut-eyebrow">Mark Your Calendar</div>
+          <p class="debut-heading">See you at our debut pop-up &mdash; <strong>June 25th</strong></p>
+          <p class="debut-sub">We can't wait to make these with you in person. ✦</p>
+        </div>
+        <div class="invite-section">
+          <div class="debut-eyebrow">Invite a Friend</div>
+          <p class="invite-body">
+            Want to bring someone along? Grab a <strong style="color:#8B1A2A">$10 ticket</strong> and use access code <strong style="color:#8B1A2A">BFF</strong> to unlock this exclusive tier.
+          </p>
+          <a href="https://luma.com/p4bq7w7l" target="_blank" rel="noopener noreferrer" class="ticket-btn">Get Tickets ✦</a>
+          <div class="code-box">
+            <span class="code-label">Use code</span>
+            <span class="code-value">BFF</span>
+            <span class="code-label">to unlock your ticket</span>
+          </div>
+          <p class="email-note">Questions? Email us at <a href="mailto:cheers@heart-butter.com">cheers@heart-butter.com</a></p>
+        </div>
+      </div>
+
+      <div class="reset-wrap">
+        <button id="reset-btn" onclick="resetApp()">Start Over</button>
+      </div>
+    `;
+
+    box.style.display = 'block';
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── reset ────────────────────────────────────
+  function resetApp() {
+    items = []; mood = null;
+    renderPills(); renderQuickAdd(); updateBtn();
+    document.getElementById('mood-cold').classList.remove('active');
+    document.getElementById('mood-hot').classList.remove('active');
+    document.getElementById('recipe').style.display = 'none';
+    document.getElementById('error-box').style.display = 'none';
+    document.getElementById('ingredient-input').value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
